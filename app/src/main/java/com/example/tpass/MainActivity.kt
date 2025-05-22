@@ -39,6 +39,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate: Инициализация MainActivity")
+        // Добавляем FLAG_SECURE для предотвращения скриншотов
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
@@ -57,6 +62,10 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume: Проверка необходимости блокировки")
+        // Восстанавливаем стандартный фон
+        window.decorView.setBackgroundColor(android.graphics.Color.WHITE)
+        binding.root.visibility = View.VISIBLE
+        
         if (appLockManager.shouldLock()) {
             Log.d(TAG, "onResume: Требуется блокировка, показываем диалог ввода пароля")
             showMasterPasswordDialog()
@@ -69,7 +78,11 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         Log.d(TAG, "onPause: Приложение уходит в фон")
-        // Не блокируем приложение сразу, а только обновляем время последней активности
+        // Устанавливаем черный фон при уходе в фон
+        window.decorView.setBackgroundColor(android.graphics.Color.BLACK)
+        binding.root.visibility = View.INVISIBLE
+        
+        // Обновляем время последней активности
         appLockManager.updateLastActiveTime()
     }
 
