@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common attributes -->
+    <attr name="showCopyButton" format="boolean" />
+    <attr name="showPasswordToggle" format="boolean" />
+    <attr name="showGenerateButton" format="boolean" />
+    <attr name="showPassword" format="boolean" />
+    <attr name="showEditButton" format="boolean" />
+    <attr name="showDeleteButton" format="boolean" />
+    <attr name="showIcon" format="boolean" />
+    <attr name="showText" format="boolean" />
+
+    <!-- Custom attributes for PasswordCardView -->
+    <declare-styleable name="PasswordCardView">
+        <attr name="titleText" format="string" />
+        <attr name="usernameText" format="string" />
+        <attr name="passwordText" format="string" />
+        <attr name="urlText" format="string" />
+        <attr name="notesText" format="string" />
+        <attr name="showPassword" />
+        <attr name="showCopyButton" />
+        <attr name="showEditButton" />
+        <attr name="showDeleteButton" />
+    </declare-styleable>
+
+    <!-- Custom attributes for PasswordInputLayout -->
+    <declare-styleable name="PasswordInputLayout">
+        <attr name="showPasswordToggle" />
+        <attr name="showGenerateButton" />
+        <attr name="passwordStrengthIndicator" format="boolean" />
+    </declare-styleable>
+
+    <!-- Custom attributes for BiometricButton -->
+    <declare-styleable name="BiometricButton">
+        <attr name="biometricType" format="enum">
+            <enum name="fingerprint" value="1" />
+            <enum name="face" value="2" />
+            <enum name="iris" value="3" />
+        </attr>
+        <attr name="showIcon" />
+        <attr name="showText" />
+    </declare-styleable>
+
+    <attr name="menuItemTint" format="color" />
+</resources> 

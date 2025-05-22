@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Card style -->
+    <style name="Widget.TPass.CardView" parent="Widget.MaterialComponents.CardView">
+        <item name="cardElevation">@dimen/card_elevation</item>
+        <item name="cardCornerRadius">@dimen/card_corner_radius</item>
+        <item name="rippleColor">@color/md_theme_dark_primary</item>
+    </style>
+
+    <!-- TextInputLayout style -->
+    <style name="Widget.TPass.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/md_theme_dark_primary</item>
+        <item name="hintTextColor">@color/md_theme_dark_primary</item>
+        <item name="android:textColorHint">@color/md_theme_dark_primary</item>
+        <item name="endIconTint">@color/md_theme_dark_primary</item>
+        <item name="startIconTint">@color/md_theme_dark_primary</item>
+    </style>
+
+    <!-- FloatingActionButton style -->
+    <style name="Widget.TPass.FloatingActionButton" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/md_theme_dark_primary</item>
+        <item name="tint">@color/md_theme_dark_onPrimary</item>
+    </style>
+
+    <!-- Toolbar style -->
+    <style name="Widget.TPass.Toolbar" parent="Widget.MaterialComponents.Toolbar">
+        <item name="titleTextColor">@color/md_theme_dark_onPrimary</item>
+        <item name="navigationIconTint">@color/md_theme_dark_onPrimary</item>
+        <item name="menuItemTint">@color/md_theme_dark_onPrimary</item>
+    </style>
+
+    <!-- Dialog style -->
+    <style name="Theme.TPass.Dialog" parent="Theme.MaterialComponents.Dark.Dialog">
+        <item name="colorPrimary">@color/md_theme_dark_primary</item>
+        <item name="colorAccent">@color/md_theme_dark_secondary</item>
+        <item name="android:textColorPrimary">@color/md_theme_dark_onBackground</item>
+        <item name="android:textColorSecondary">@color/md_theme_dark_onBackground</item>
+        <item name="android:windowBackground">@color/md_theme_dark_background</item>
+    </style>
+</resources> 

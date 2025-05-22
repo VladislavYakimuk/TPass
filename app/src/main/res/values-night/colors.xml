@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Основные цвета -->
+    <color name="primary">#64B5F6</color>
+    <color name="primary_dark">#1976D2</color>
+    <color name="accent">#FF4081</color>
+    
+    <!-- Фон и текст -->
+    <color name="background">#121212</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3FFFFFF</color>
+    
+    <!-- Кнопки и элементы интерфейса -->
+    <color name="button_text">#FFFFFF</color>
+    <color name="divider">#1FFFFFFF</color>
+    
+    <!-- Состояния -->
+    <color name="error">#CF6679</color>
+    <color name="success">#81C784</color>
+    <color name="warning">#FFB74D</color>
+
+    <!-- Material Design 3 Colors -->
+    <color name="md_theme_dark_primary">#64B5F6</color>
+    <color name="md_theme_dark_secondary">#FF4081</color>
+    <color name="md_theme_dark_onBackground">#FFFFFF</color>
+    <color name="md_theme_dark_background">#121212</color>
+    <color name="md_theme_dark_onPrimary">#000000</color>
+    <color name="md_theme_dark_surface">#121212</color>
+    <color name="md_theme_dark_onSurface">#FFFFFF</color>
+</resources> 

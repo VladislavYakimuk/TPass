@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TPass</string>
+    <string name="yandex_client_id">384b7b8e05a64ce5b1fa6260351c3e89</string>
+    
+    <!-- Основные строки -->
+    <string name="add_password">Добавить пароль</string>
+    <string name="title">Название</string>
+    <string name="username">Имя пользователя</string>
+    <string name="password">Пароль</string>
+    <string name="url">URL</string>
+    <string name="notes">Заметки</string>
+    <string name="details">Детали</string>
+    <string name="copy_password">Копировать пароль</string>
+    <string name="delete">Удалить</string>
+    <string name="delete_entry">Удаление записи</string>
+    <string name="confirm_delete">Вы уверены, что хотите удалить запись "%s"?</string>
+    <string name="copied_to_clipboard">Пароль скопирован в буфер обмена</string>
+    <string name="no_passwords">Нет сохраненных паролей</string>
+    <string name="password_copied">Пароль скопирован в буфер обмена</string>
+    
+    <!-- Аутентификация -->
+    <string name="master_password">Мастер-пароль</string>
+    <string name="password_requirements">Требования к паролю:</string>
+    <string name="requirement_length">• Минимум 12 символов</string>
+    <string name="requirement_uppercase">• Минимум 1 заглавная буква (A-Z)</string>
+    <string name="requirement_lowercase">• Минимум 1 строчная буква (a-z)</string>
+    <string name="requirement_digit">• Минимум 1 цифра (0-9)</string>
+    <string name="requirement_special">• Минимум 1 специальный символ (!@#$%^&amp;*)</string>
+    <string name="invalid_password">Неверный пароль</string>
+    <string name="invalid_entry_data">Неверные данные записи</string>
+    <string name="enter_master_password">Введите мастер-пароль</string>
+    
+    <!-- Биометрическая аутентификация -->
+    <string name="biometric_error">Ошибка биометрической аутентификации: %s</string>
+    <string name="setup_biometric">Настройка биометрии</string>
+    <string name="setup_biometric_message">Хотите настроить биометрическую аутентификацию?</string>
+    <string name="biometric_prompt_title">Вход в TPass</string>
+    <string name="biometric_prompt_subtitle">Используйте отпечаток пальца или Face ID для входа</string>
+    <string name="biometric_success">Успешная аутентификация</string>
+    <string name="biometric_not_available">Биометрия недоступна на устройстве</string>
+    <string name="biometric_title">Биометрическая аутентификация</string>
+    <string name="biometric_subtitle">Подтвердите свою личность</string>
+    <string name="use_master_password">Войти по мастер-паролю</string>
+    
+    <!-- Кнопки и действия -->
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+    <string name="add">Добавить</string>
+    <string name="save">Сохранить</string>
+    <string name="edit">Редактировать</string>
+    <string name="close">Закрыть</string>
+    <string name="previous">Назад</string>
+    <string name="action_settings">Настройки</string>
+    
+    <!-- Сообщения об ошибках -->
+    <string name="error_opening_database">Не удалось открыть базу данных</string>
+    <string name="error_adding_entry">Не удалось добавить запись</string>
+    <string name="error_deleting_entry">Не удалось удалить запись</string>
+    <string name="required_fields">Пожалуйста, заполните все обязательные поля</string>
+
+    <!-- Навигация -->
+    <string name="first_fragment_label">Главный экран</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    
+    <!-- Иконки -->
+    <string name="service_icon">Иконка сервиса</string>
+    
+    <!-- Тестовый текст -->
+    <string name="lorem_ipsum">Lorem ipsum</string>
+
+    <string name="service_name">Название сервиса</string>
+
+    <string name="edit_password">Редактировать пароль</string>
+    <string name="password_details">Детали пароля</string>
+
+    <!-- Мастер-пароль -->
+    <string name="set_master_password">Установка мастер-пароля</string>
+    <string name="master_password_set">Мастер-пароль установлен</string>
+    <string name="master_password_required">Требуется мастер-пароль</string>
+    <string name="master_password_incorrect">Неверный мастер-пароль</string>
+
+    <!-- Поля ввода -->
+    <string name="hint_service">Название сервиса</string>
+    <string name="hint_username">Имя пользователя</string>
+    <string name="hint_password">Пароль</string>
+    <string name="hint_url">URL</string>
+    <string name="hint_notes">Заметки</string>
+    <string name="generate_password">Сгенерировать пароль</string>
+
+    <string name="toggle_password_visibility">Переключить видимость пароля</string>
+
+    <string name="next">Next</string>
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="settings">Настройки</string>
+    <string name="account">Учетная запись</string>
+    <string name="user_avatar">Аватар пользователя</string>
+    <string name="not_authorized">Не авторизован</string>
+    <string name="login_yandex">Войдите в аккаунт Яндекс</string>
+    <string name="no_name">Нет имени</string>
+    <string name="no_email">Нет email</string>
+
+    <string name="sync_to_yandex">Синхронизировать с Яндекс Диском</string>
+    <string name="download_from_yandex">Загрузить с Яндекс Диска</string>
+    <string name="sync_success">Синхронизация успешно выполнена</string>
+    <string name="sync_error">Ошибка синхронизации</string>
+    <string name="download_success">Загрузка успешно выполнена</string>
+    <string name="download_error">Ошибка загрузки</string>
+    <string name="auth_error">Ошибка авторизации</string>
+    <string name="syncing">Синхронизация...</string>
+    <string name="downloading">Загрузка...</string>
+
+    <string name="attempts_remaining">Осталось попыток: %d</string>
+    <string name="cooldown_message">Подождите %s перед следующей попыткой</string>
+    <string name="too_many_attempts">Слишком много попыток. Пожалуйста, подождите.</string>
+
+    <string name="action_history">История изменений</string>
+</resources>
