@@ -17,7 +17,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:inputType="text"
-        android:maxLines="1" />
+        android:maxLines="1"
+        android:importantForAutofill="no" />
 
     <TextView
         android:layout_width="match_parent"
@@ -32,7 +33,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:inputType="text"
-        android:maxLines="1" />
+        android:maxLines="1"
+        android:importantForAutofill="no" />
 
     <TextView
         android:layout_width="match_parent"
@@ -52,7 +54,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:inputType="textPassword"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:importantForAutofill="no" />
 
         <ImageButton
             android:id="@+id/buttonTogglePasswordVisibility"
@@ -61,6 +64,41 @@
             android:src="@drawable/ic_visibility"
             android:contentDescription="@string/toggle_password_visibility" />
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical">
+
+        <ProgressBar
+            android:id="@+id/passwordStrengthBar"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="0dp"
+            android:layout_height="8dp"
+            android:layout_weight="1"
+            android:progress="0"
+            android:max="100"
+            android:progressDrawable="@drawable/password_strength_progress" />
+
+        <TextView
+            android:id="@+id/passwordStrengthLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Слабый"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/passwordStrengthWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Пароль недостаточно надежный!"
+        android:textColor="@android:color/holo_red_dark"
+        android:visibility="gone"
+        android:layout_marginTop="4dp" />
 
     <EditText
         android:id="@+id/editTextUrl"

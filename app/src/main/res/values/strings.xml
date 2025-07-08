@@ -22,7 +22,7 @@
     <!-- Аутентификация -->
     <string name="master_password">Мастер-пароль</string>
     <string name="password_requirements">Требования к паролю:</string>
-    <string name="requirement_length">• Минимум 12 символов</string>
+    <string name="requirement_length">• Минимум 14 символов</string>
     <string name="requirement_uppercase">• Минимум 1 заглавная буква (A-Z)</string>
     <string name="requirement_lowercase">• Минимум 1 строчная буква (a-z)</string>
     <string name="requirement_digit">• Минимум 1 цифра (0-9)</string>

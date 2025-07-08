@@ -36,6 +36,10 @@ import android.text.Editable
 import android.widget.TextView
 import android.os.Handler
 import java.util.concurrent.TimeUnit
+import android.widget.ProgressBar
+import android.graphics.Color
+import com.google.android.material.button.MaterialButton
+import android.widget.ImageButton
 
 class FirstFragment : Fragment() {
 
@@ -136,6 +140,11 @@ class FirstFragment : Fragment() {
         val urlEditText = dialogView.findViewById<EditText>(R.id.urlEditText)
         val notesEditText = dialogView.findViewById<EditText>(R.id.notesEditText)
         val generatePasswordButton = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.generatePasswordButton)
+        val passwordStrengthWarning = dialogView.findViewById<TextView>(R.id.passwordStrengthWarning)
+        val passwordStrengthBar = dialogView.findViewById<ProgressBar>(R.id.passwordStrengthBar)
+        val passwordStrengthLabel = dialogView.findViewById<TextView>(R.id.passwordStrengthLabel)
+        val passwordRecommendationsButton = dialogView.findViewById<ImageButton>(R.id.passwordRecommendationsButton)
+        var passwordGenerated = false
 
         // Добавляем обработчик нажатия для скрытия клавиатуры
         dialogView.setOnClickListener {
@@ -146,14 +155,39 @@ class FirstFragment : Fragment() {
         generatePasswordButton.setOnClickListener {
             val generatedPassword = PasswordGenerator.generatePassword()
             passwordEditText.setText(generatedPassword)
-            // Показываем пароль после генерации
             passwordEditText.transformationMethod = null
+            passwordStrengthWarning.visibility = View.GONE
+            passwordGenerated = true
         }
 
-        AlertDialog.Builder(requireContext())
+        passwordEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                passwordGenerated = false
+                val password = s?.toString() ?: ""
+                updatePasswordStrengthUI(password, passwordStrengthBar, passwordStrengthLabel)
+            }
+        })
+
+        passwordRecommendationsButton.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Рекомендации для надежного пароля")
+                .setMessage("• Минимум 14 символов\n• Минимум 1 заглавная буква\n• Минимум 1 строчная буква\n• Минимум 1 специальный символ\n• Не используйте подряд идущие одинаковые цифры")
+                .setPositiveButton("OK", null)
+                .show()
+        }
+
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle(R.string.add_password)
             .setView(dialogView)
-            .setPositiveButton(R.string.save) { _, _ ->
+            .setPositiveButton(R.string.save, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            saveButton.setOnClickListener {
                 val service = serviceEditText.text.toString()
                 val username = usernameEditText.text.toString()
                 val password = passwordEditText.text.toString()
@@ -162,7 +196,14 @@ class FirstFragment : Fragment() {
 
                 if (service.isBlank() || username.isBlank() || password.isBlank()) {
                     Toast.makeText(requireContext(), R.string.required_fields, Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
+                    return@setOnClickListener
+                }
+
+                // Проверяем надежность только если пароль не был сгенерирован
+                if (!passwordGenerated && !validatePassword(password)) {
+                    passwordStrengthWarning.visibility = View.VISIBLE
+                    Toast.makeText(requireContext(), "Пароль слишком простой. Придумайте более надежный пароль.", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
                 }
 
                 val newEntry = KeePassEntry(
@@ -174,9 +215,10 @@ class FirstFragment : Fragment() {
                     notes = notes
                 )
                 passwordViewModel.addEntry(newEntry)
+                dialog.dismiss()
             }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+        }
+        dialog.show()
     }
 
     private fun showSetMasterPasswordDialog() {
@@ -353,7 +395,7 @@ class FirstFragment : Fragment() {
     }
 
     private fun validatePassword(password: String): Boolean {
-        val hasMinLength = password.length >= 12
+        val hasMinLength = password.length >= 14
         val hasUpperCase = password.any { it.isUpperCase() }
         val hasLowerCase = password.any { it.isLowerCase() }
         val hasDigit = password.any { it.isDigit() }
@@ -369,7 +411,7 @@ class FirstFragment : Fragment() {
         val digitRequirement = dialogView.findViewById<TextView>(R.id.digitRequirement)
         val specialCharRequirement = dialogView.findViewById<TextView>(R.id.specialCharRequirement)
 
-        val hasMinLength = password.length >= 12
+        val hasMinLength = password.length >= 14
         val hasUpperCase = password.any { it.isUpperCase() }
         val hasLowerCase = password.any { it.isLowerCase() }
         val hasDigit = password.any { it.isDigit() }
@@ -654,5 +696,40 @@ class FirstFragment : Fragment() {
         } catch (e: Exception) {
             Log.e("FirstFragment", "Ошибка при закрытии биометрического диалога", e)
         }
+    }
+
+    private fun updatePasswordStrengthUI(password: String, bar: ProgressBar, label: TextView) {
+        val (score, level) = getPasswordStrength(password)
+        bar.progress = score
+        when (level) {
+            PasswordStrengthLevel.WEAK -> {
+                label.text = "Слабый"
+                label.setTextColor(Color.parseColor("#FF5252"))
+            }
+            PasswordStrengthLevel.MEDIUM -> {
+                label.text = "Средний"
+                label.setTextColor(Color.parseColor("#FFEB3B"))
+            }
+            PasswordStrengthLevel.STRONG -> {
+                label.text = "Сильный"
+                label.setTextColor(Color.parseColor("#4CAF50"))
+            }
+        }
+    }
+
+    enum class PasswordStrengthLevel { WEAK, MEDIUM, STRONG }
+
+    private fun getPasswordStrength(password: String): Pair<Int, PasswordStrengthLevel> {
+        var score = 0
+        if (password.length >= 14) score += 20
+        if (password.length >= 16) score += 20
+        if (password.any { it.isUpperCase() }) score += 15
+        if (password.any { it.isLowerCase() }) score += 10
+        if (password.any { it.isDigit() }) score += 10
+        if (password.any { it in "!@#\$%^&*()_+-=[]{}|;:'\",.<>?/" }) score += 15
+        if (Regex("(\\d)\\1").containsMatchIn(password)) score -= 15 // подряд идущие одинаковые цифры
+        if (score < 40) return score.coerceAtLeast(0) to PasswordStrengthLevel.WEAK
+        if (score < 70) return score to PasswordStrengthLevel.MEDIUM
+        return score.coerceAtMost(100) to PasswordStrengthLevel.STRONG
     }
 }
