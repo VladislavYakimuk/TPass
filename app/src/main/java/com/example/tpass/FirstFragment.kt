@@ -40,6 +40,10 @@ import android.widget.ProgressBar
 import android.graphics.Color
 import com.google.android.material.button.MaterialButton
 import android.widget.ImageButton
+import android.os.Looper
+import com.google.android.material.chip.Chip
+import android.widget.Spinner
+import android.widget.ArrayAdapter
 
 class FirstFragment : Fragment() {
 
@@ -58,6 +62,14 @@ class FirstFragment : Fragment() {
     private var sdk: YandexAuthSdk? = null
     private lateinit var executor: Executor
     private var masterPasswordDialog: AlertDialog? = null
+    private var checkHandler: Handler? = null
+    private val checkRunnable = object : Runnable {
+        override fun run() {
+            checkPasswordsForExpiry()
+            checkHandler?.postDelayed(this, 60_000) // 1 минута
+        }
+    }
+    private val postponedReminderIds = mutableSetOf<Int>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -77,6 +89,8 @@ class FirstFragment : Fragment() {
         setupObservers()
         setupRecyclerView()
         setupAddButton()
+        // setupCategoryChips() // Заполнение ChipGroup категориями - перенесен внутрь observer'а
+        setupSearchField()   // Реактивный поиск
 
         // Откладываем проверку аутентификации до следующего кадра UI
         view.post {
@@ -88,11 +102,30 @@ class FirstFragment : Fragment() {
         }
 
         initializeYandexAuth()
+        checkHandler = Handler(Looper.getMainLooper())
+        checkHandler?.post(checkRunnable)
     }
 
     private fun setupObservers() {
         passwordViewModel.entries.observe(viewLifecycleOwner) { entries ->
+            Log.d("FirstFragment", "Получены записи: ${entries.size} штук")
+            entries.forEach { entry ->
+                Log.d("FirstFragment", "Запись: ${entry.title}, категория: ${entry.category}, теги: ${entry.tags}")
+            }
+            
+            val now = System.currentTimeMillis()
+            val expiryInterval = getPasswordExpiryInterval()
+            // Оставляем в postponedReminderIds только те id, у которых lastUpdated по-прежнему старый
+            val stillOldIds = entries.filter { it.id in postponedReminderIds && (now - it.lastUpdated) >= expiryInterval }
+                .map { it.id }
+            postponedReminderIds.retainAll(stillOldIds)
+            Log.d("PasswordCheck", "postponedReminderIds после фильтрации: $postponedReminderIds")
+            passwordAdapter.setPostponedReminders(postponedReminderIds)
             passwordAdapter.updateList(entries)
+            // Категории инициализируем только после открытия базы
+            if (passwordViewModel.isDatabaseOpen()) {
+                setupCategoryChips()
+            }
         }
 
         passwordViewModel.error.observe(viewLifecycleOwner) { error ->
@@ -100,12 +133,22 @@ class FirstFragment : Fragment() {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
             }
         }
+
+        passwordViewModel.newEntryAdded.observe(viewLifecycleOwner) { newEntry ->
+            // Прокручиваем к новой записи
+            val position = passwordAdapter.getPositionById(newEntry.id)
+            if (position != -1) {
+                binding.recyclerView.smoothScrollToPosition(position)
+            }
+        }
     }
 
     private fun setupRecyclerView() {
         passwordAdapter = PasswordAdapter(
             onItemClick = { entry: KeePassEntry ->
-                val dialog = EditEntryDialog(entry,
+                val editDialogManager = EditEntryDialogManager(
+                    context = requireContext(),
+                    entry = entry,
                     onSave = { updatedEntry ->
                         passwordViewModel.updateEntry(updatedEntry)
                     },
@@ -113,7 +156,7 @@ class FirstFragment : Fragment() {
                         passwordViewModel.deleteEntry(entryToDelete)
                     }
                 )
-                dialog.show(parentFragmentManager, "EditEntryDialog")
+                editDialogManager.showEditDialog()
             },
             onCopyClick = { entry: KeePassEntry ->
                 copyPasswordToClipboard(entry)
@@ -128,97 +171,21 @@ class FirstFragment : Fragment() {
 
     private fun setupAddButton() {
         binding.fabAdd.setOnClickListener {
-            showAddPasswordDialog()
-        }
-    }
-
-    private fun showAddPasswordDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_add_password, null)
-        val serviceEditText = dialogView.findViewById<EditText>(R.id.titleEditText)
-        val usernameEditText = dialogView.findViewById<EditText>(R.id.usernameEditText)
-        val passwordEditText = dialogView.findViewById<EditText>(R.id.passwordEditText)
-        val urlEditText = dialogView.findViewById<EditText>(R.id.urlEditText)
-        val notesEditText = dialogView.findViewById<EditText>(R.id.notesEditText)
-        val generatePasswordButton = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.generatePasswordButton)
-        val passwordStrengthWarning = dialogView.findViewById<TextView>(R.id.passwordStrengthWarning)
-        val passwordStrengthBar = dialogView.findViewById<ProgressBar>(R.id.passwordStrengthBar)
-        val passwordStrengthLabel = dialogView.findViewById<TextView>(R.id.passwordStrengthLabel)
-        val passwordRecommendationsButton = dialogView.findViewById<ImageButton>(R.id.passwordRecommendationsButton)
-        var passwordGenerated = false
-
-        // Добавляем обработчик нажатия для скрытия клавиатуры
-        dialogView.setOnClickListener {
-            val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-            imm.hideSoftInputFromWindow(dialogView.windowToken, 0)
-        }
-
-        generatePasswordButton.setOnClickListener {
-            val generatedPassword = PasswordGenerator.generatePassword()
-            passwordEditText.setText(generatedPassword)
-            passwordEditText.transformationMethod = null
-            passwordStrengthWarning.visibility = View.GONE
-            passwordGenerated = true
-        }
-
-        passwordEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                passwordGenerated = false
-                val password = s?.toString() ?: ""
-                updatePasswordStrengthUI(password, passwordStrengthBar, passwordStrengthLabel)
+            if (!passwordViewModel.isDatabaseOpen()) {
+                Toast.makeText(requireContext(), getString(R.string.database_not_open), Toast.LENGTH_SHORT).show()
+                showAuthenticationDialog()
+                return@setOnClickListener
             }
-        })
-
-        passwordRecommendationsButton.setOnClickListener {
-            AlertDialog.Builder(requireContext())
-                .setTitle("Рекомендации для надежного пароля")
-                .setMessage("• Минимум 14 символов\n• Минимум 1 заглавная буква\n• Минимум 1 строчная буква\n• Минимум 1 специальный символ\n• Не используйте подряд идущие одинаковые цифры")
-                .setPositiveButton("OK", null)
-                .show()
+            
+            val addEntryDialogManager = AddEntryDialogManager(
+                context = requireContext(),
+                onEntryAdded = { entry ->
+                    passwordViewModel.addEntry(entry)
+                },
+                isDatabaseOpen = { passwordViewModel.isDatabaseOpen() }
+            )
+            addEntryDialogManager.showEntryTypeSelectionDialog()
         }
-
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.add_password)
-            .setView(dialogView)
-            .setPositiveButton(R.string.save, null)
-            .setNegativeButton(R.string.cancel, null)
-            .create()
-
-        dialog.setOnShowListener {
-            val saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            saveButton.setOnClickListener {
-                val service = serviceEditText.text.toString()
-                val username = usernameEditText.text.toString()
-                val password = passwordEditText.text.toString()
-                val url = urlEditText.text.toString()
-                val notes = notesEditText.text.toString()
-
-                if (service.isBlank() || username.isBlank() || password.isBlank()) {
-                    Toast.makeText(requireContext(), R.string.required_fields, Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-
-                // Проверяем надежность только если пароль не был сгенерирован
-                if (!passwordGenerated && !validatePassword(password)) {
-                    passwordStrengthWarning.visibility = View.VISIBLE
-                    Toast.makeText(requireContext(), "Пароль слишком простой. Придумайте более надежный пароль.", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-
-                val newEntry = KeePassEntry(
-                    id = 0, // Room автоматически сгенерирует ID
-                    title = service,
-                    username = username,
-                    password = password,
-                    url = url,
-                    notes = notes
-                )
-                passwordViewModel.addEntry(newEntry)
-                dialog.dismiss()
-            }
-        }
-        dialog.show()
     }
 
     private fun showSetMasterPasswordDialog() {
@@ -672,6 +639,7 @@ class FirstFragment : Fragment() {
             Log.e("FirstFragment", "Ошибка при закрытии диалогов", e)
         }
         _binding = null
+        checkHandler?.removeCallbacks(checkRunnable)
     }
 
     override fun onDetach() {
@@ -732,4 +700,102 @@ class FirstFragment : Fragment() {
         if (score < 70) return score to PasswordStrengthLevel.MEDIUM
         return score.coerceAtMost(100) to PasswordStrengthLevel.STRONG
     }
+
+    private fun checkPasswordsForExpiry() {
+        Log.d("PasswordCheck", "Запущена проверка KeePassEntry")
+        val entries = passwordViewModel.entries.value
+        Log.d("PasswordCheck", "entries: $entries")
+        if (entries == null) {
+            Log.d("PasswordCheck", "entries is null")
+            return
+        }
+        val now = System.currentTimeMillis()
+        val expiryInterval = getPasswordExpiryInterval()
+        entries.forEach { entry ->
+            val secondsSinceUpdate = (now - entry.lastUpdated) / 1000
+            Log.d("PasswordCheck", "Entry: ${entry.title}, secondsSinceUpdate: $secondsSinceUpdate")
+            if ((now - entry.lastUpdated) >= expiryInterval && entry.id !in postponedReminderIds) {
+                Log.d("PasswordCheck", "Показываю диалог для ${entry.title}")
+                showPasswordUpdateDialog(entry)
+            }
+        }
+    }
+
+    private fun showPasswordUpdateDialog(entry: KeePassEntry) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Обновите пароль")
+            .setMessage("Пароль для ${entry.title} устарел. Сгенерировать новый?")
+            .setPositiveButton("Сгенерировать") { _, _ ->
+                val newPassword = PasswordGenerator.generatePassword()
+                showGeneratedPasswordDialog(entry, newPassword)
+            }
+            .setNegativeButton("Позже") { _, _ ->
+                postponedReminderIds.add(entry.id)
+                passwordAdapter.setPostponedReminders(postponedReminderIds)
+            }
+            .show()
+    }
+
+    private fun showGeneratedPasswordDialog(entry: KeePassEntry, newPassword: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Новый пароль")
+            .setMessage(newPassword)
+            .setPositiveButton("Сохранить") { _, _ ->
+                val updatedEntry = entry.copy(password = newPassword, lastUpdated = System.currentTimeMillis())
+                passwordViewModel.updateEntry(updatedEntry)
+                postponedReminderIds.remove(entry.id)
+                passwordAdapter.setPostponedReminders(postponedReminderIds)
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun getPasswordExpiryInterval(): Long {
+        val prefs = requireContext().getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+        return prefs.getLong("password_expiry_interval", 7 * 24 * 60 * 60 * 1000L) // по умолчанию 7 дней
+    }
+
+    private fun setupCategoryChips() {
+        val chipGroup = binding.categoryChipGroup
+        chipGroup.removeAllViews()
+        val categories = listOf("Аккаунты", "PIN-коды", "Wi-Fi") +
+            passwordViewModel.getAllCategories().filterNot {
+                it in listOf("PIN-коды", "Аккаунты", "Wi-Fi")
+            }
+        categories.forEach { category ->
+            val chip = Chip(requireContext())
+            chip.text = category
+            chip.isCheckable = true
+            chip.setOnClickListener {
+                filterByCategory(category)
+            }
+            chipGroup.addView(chip)
+        }
+    }
+
+    private fun filterByCategory(category: String) {
+        val entries = when (category) {
+            "Аккаунты" -> passwordViewModel.entries.value ?: emptyList()
+            else -> passwordViewModel.getEntriesByCategory(category)
+        }
+        passwordAdapter.updateList(entries)
+    }
+
+    private fun setupSearchField() {
+        val searchEditText = binding.searchEditText
+        searchEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                passwordViewModel.setSearchQuery(s?.toString() ?: "")
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+        lifecycleScope.launchWhenStarted {
+            passwordViewModel.searchResults.collect { results ->
+                passwordAdapter.updateList(results)
+            }
+        }
+    }
+
+
 }

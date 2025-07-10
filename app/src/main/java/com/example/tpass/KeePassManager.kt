@@ -63,7 +63,9 @@ class KeePassManager(private val context: Context) {
                         username = entry.username,
                         password = entry.password,
                         url = entry.url,
-                        notes = entry.notes
+                        notes = entry.notes,
+                        category = entry.category,
+                        tags = entry.tags
                     )
                     passwordDao.insertPassword(passwordEntry)
                 }
@@ -71,13 +73,16 @@ class KeePassManager(private val context: Context) {
             
             // Читаем все записи из локальной базы данных
             entries = passwordDao.getAllPasswords().map { passwordEntry ->
+                Log.d("KeePassManager", "Загружаем запись: ${passwordEntry.serviceName}, категория: ${passwordEntry.category}, теги: ${passwordEntry.tags}")
                 KeePassEntry(
                     id = passwordEntry.id,
                     title = passwordEntry.serviceName,
                     username = passwordEntry.username,
                     password = passwordEntry.password,
                     url = passwordEntry.url,
-                    notes = passwordEntry.notes
+                    notes = passwordEntry.notes,
+                    category = passwordEntry.category,
+                    tags = passwordEntry.tags
                 )
             }
             isOpen = true
@@ -98,9 +103,13 @@ class KeePassManager(private val context: Context) {
         var password = ""
         var url = ""
         var notes = ""
+        var category = "PIN-коды" // По умолчанию
+        var tags = emptyList<String>()
 
         try {
+            Log.d("KeePassManager", "Начинаем чтение файла: ${databaseFile.absolutePath}")
             databaseFile.readLines().forEach { line ->
+                Log.d("KeePassManager", "Читаем строку: '$line'")
                 when {
                     line.startsWith("Entry:") -> {
                         // Сохраняем предыдущую запись, если она есть
@@ -114,6 +123,8 @@ class KeePassManager(private val context: Context) {
                         password = ""
                         url = ""
                         notes = ""
+                        category = "PIN-коды" // Сброс к значению по умолчанию
+                        tags = emptyList<String>()
                     }
                     line.trim().startsWith("Title:") -> {
                         title = line.substringAfter("Title:").trim()
@@ -130,14 +141,31 @@ class KeePassManager(private val context: Context) {
                     line.trim().startsWith("Notes:") -> {
                         notes = line.substringAfter("Notes:").trim()
                     }
-                    line.isBlank() && currentEntry == null && title.isNotEmpty() && username.isNotEmpty() && password.isNotEmpty() -> {
+                    line.trim().startsWith("Category:") -> {
+                        category = line.substringAfter("Category:").trim()
+                    }
+                    line.trim().startsWith("Tags:") -> {
+                        val tagsString = line.substringAfter("Tags:").trim()
+                        tags = if (tagsString.isNotEmpty()) {
+                            // Убираем квадратные скобки, если они есть
+                            val cleanTagsString = tagsString.removeSurrounding("[", "]")
+                            cleanTagsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                        } else {
+                            emptyList()
+                        }
+                    }
+                    line.isBlank() && currentEntry == null && title.isNotEmpty() && password.isNotEmpty() -> {
                         // Создаем новую запись, когда встречаем пустую строку после заполнения обязательных полей
+                        // Для PIN-кодов username может быть пустым
+                        Log.d("KeePassManager", "Создаем запись: title='$title', username='$username', category='$category', tags='$tags'")
                         currentEntry = KeePassEntry(
                             title = title,
                             username = username,
                             password = password,
                             url = url,
-                            notes = notes
+                            notes = notes,
+                            category = category,
+                            tags = tags
                         )
                     }
                 }
@@ -243,11 +271,14 @@ class KeePassManager(private val context: Context) {
     suspend fun addEntry(entry: KeePassEntry): KeePassEntry {
         if (!isOpen) throw IllegalStateException("Database is not open")
         val passwordEntry = PasswordEntry(
+            id = entry.id,
             serviceName = entry.title,
             username = entry.username,
             password = entry.password,
             url = entry.url,
-            notes = entry.notes
+            notes = entry.notes,
+            category = entry.category,
+            tags = entry.tags
         )
         val id = passwordDao.insertPassword(passwordEntry).toInt()
         val newEntry = entry.copy(id = id)
@@ -267,7 +298,9 @@ class KeePassManager(private val context: Context) {
             username = entry.username,
             password = entry.password,
             url = entry.url,
-            notes = entry.notes
+            notes = entry.notes,
+            category = entry.category,
+            tags = entry.tags
         )
         val result = passwordDao.updatePassword(updatedEntry)
         if (result == 0) {
@@ -287,7 +320,9 @@ class KeePassManager(private val context: Context) {
             username = entry.username,
             password = entry.password,
             url = entry.url,
-            notes = entry.notes
+            notes = entry.notes,
+            category = entry.category,
+            tags = entry.tags
         )
         val result = passwordDao.deletePassword(passwordEntry)
         if (result == 0) {
@@ -326,6 +361,12 @@ class KeePassManager(private val context: Context) {
                     }
                     if (entry.notes.isNotEmpty()) {
                         data.append("  Notes: ${entry.notes}\n")
+                    }
+                    if (entry.category.isNotEmpty()) {
+                        data.append("  Category: ${entry.category}\n")
+                    }
+                    if (entry.tags.isNotEmpty()) {
+                        data.append("  Tags: ${entry.tags.joinToString(", ")}\n")
                     }
                     data.append("\n")
                 }

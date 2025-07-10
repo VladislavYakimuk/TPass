@@ -178,7 +178,9 @@ class SyncRepository(private val context: Context) {
                                             username = entry.username,
                                             password = entry.password,
                                             url = entry.url,
-                                            notes = entry.notes
+                                            notes = entry.notes,
+                                            category = entry.category,
+                                            tags = entry.tags
                                         )
                                         passwordDao.insertPassword(passwordEntry)
                                     }

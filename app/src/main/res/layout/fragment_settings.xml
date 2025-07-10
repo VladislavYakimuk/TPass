@@ -74,6 +74,13 @@
             android:text="@string/download_from_yandex"
             android:layout_marginBottom="8dp"/>
 
+        <Button
+            android:id="@+id/expiryIntervalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Настроить срок действия пароля"
+            android:layout_marginBottom="8dp"/>
+
         <TextView
             android:id="@+id/syncStatusTextView"
             android:layout_width="match_parent"

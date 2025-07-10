@@ -116,4 +116,25 @@
     <string name="too_many_attempts">Слишком много попыток. Пожалуйста, подождите.</string>
 
     <string name="action_history">История изменений</string>
+    <string name="category">Категория</string>
+    
+    <!-- Новые диалоги добавления записей -->
+    <string name="select_entry_type">Выберите тип записи</string>
+    <string name="add_account">Добавить аккаунт</string>
+    <string name="add_wifi">Добавить Wi-Fi</string>
+    <string name="add_pin">Добавить PIN-код</string>
+    <string name="network_name">Название сети</string>
+    <string name="pin_code">PIN-код</string>
+    <string name="tags_hint">Теги (через запятую)</string>
+    <string name="password_too_weak">Пароль слишком простой. Придумайте более надежный пароль.</string>
+    <string name="password_recommendations">Рекомендации для надежного пароля</string>
+    <string name="password_recommendations_text">• Минимум 14 символов\n• Минимум 1 заглавная буква\n• Минимум 1 строчная буква\n• Минимум 1 специальный символ\n• Не используйте подряд идущие одинаковые цифры</string>
+    <string name="fill_required_fields">Заполните обязательные поля</string>
+    <string name="database_not_open">База данных не открыта. Сначала войдите в систему.</string>
+    
+    <!-- Диалоги редактирования -->
+    <string name="edit_pin">Редактировать PIN-код</string>
+    <string name="edit_wifi">Редактировать Wi-Fi</string>
+    <string name="edit_account">Редактировать аккаунт</string>
+    <string name="weak_password_warning_edit">Пароль ненадёжный. Рекомендуем придумать более сложный пароль или воспользоваться генератором.</string>
 </resources>

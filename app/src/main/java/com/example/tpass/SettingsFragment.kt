@@ -46,6 +46,9 @@ class SettingsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         updateUserInfo()
         setupSyncButtons()
+        binding.expiryIntervalButton?.setOnClickListener {
+            showExpiryIntervalDialog()
+        }
     }
 
     private fun setupSyncButtons() {
@@ -150,6 +153,36 @@ class SettingsFragment : Fragment() {
             binding.userNameTextView.text = getString(R.string.not_authorized)
             binding.userEmailTextView.text = getString(R.string.login_yandex)
         }
+    }
+
+    private fun getPasswordExpiryInterval(): Long {
+        val prefs = requireContext().getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+        return prefs.getLong("password_expiry_interval", 7 * 24 * 60 * 60 * 1000L) // по умолчанию 7 дней
+    }
+
+    private fun setPasswordExpiryInterval(intervalMillis: Long) {
+        val prefs = requireContext().getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+        prefs.edit().putLong("password_expiry_interval", intervalMillis).apply()
+    }
+
+    private fun showExpiryIntervalDialog() {
+        val intervals = arrayOf("1 минута", "30 дней", "60 дней", "90 дней")
+        val values = arrayOf(
+            1L * 60 * 1000, // 1 минута
+            30L * 24 * 60 * 60 * 1000, // 30 дней
+            60L * 24 * 60 * 60 * 1000, // 60 дней
+            90L * 24 * 60 * 60 * 1000  // 90 дней
+        )
+        val current = values.indexOf(getPasswordExpiryInterval())
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Через сколько дней пароль устареет?")
+            .setSingleChoiceItems(intervals, current) { dialog, which ->
+                setPasswordExpiryInterval(values[which])
+                Toast.makeText(requireContext(), "Срок действия пароля: ${intervals[which]}", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
     }
 
     override fun onDestroyView() {
